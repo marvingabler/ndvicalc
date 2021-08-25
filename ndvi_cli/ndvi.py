@@ -154,8 +154,7 @@ class NDVICalc():
         ndvi_data = {}
 
         for file_url in latest_data:
-            with rasterio.open(latest_data[file_url]) as url_fp:           
-                print(latest_data[file_url]) 
+            with rasterio.open(latest_data[file_url]) as url_fp:
                 coord_transformer = Transformer.from_crs("epsg:4326", url_fp.crs) 
 
                 # calculate pixels to be streamed in cog 
@@ -252,17 +251,24 @@ class NDVICalc():
 # create cli
 @click.command()
 @click.option("--example", is_flag=True, help="Run example")
-@click.option('--path', help="Path or url to geoJSON file with geometry")
+@click.option('--file', help="Path or url to geoJSON file with geometry")
 @click.option('--full', is_flag=True, help="Print full statistics (max, min, std)")
 @click.option('--plot', is_flag=True, help='Render plot of NDVI at given geometry')
-def cli(example, path, full, plot):
+def cli(example, file, full, plot):
+    '''
+    Calculate the NDVI from geoJSON files from path or URL
+
+    python ndvi.py --example --full
+
+    '''
     calc = NDVICalc()
     if example:
-        path = "../example/doberitzer_heide.geojson"
-    if not path:
+        print("Using example doberitzer_heide.geojson")
+        file = "../example/doberitzer_heide.geojson"
+    if not file:
         print("A path or url is required. Type python ndvi.py --help for help or start with --example flag.")
     else:
-        calc.calc_ndvi(file_path=path, full_statistics=full, show_plot=plot)
+        calc.calc_ndvi(file_path=file, full_statistics=full, show_plot=plot)
     
 if __name__ == "__main__":
     cli()
