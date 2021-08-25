@@ -1,7 +1,6 @@
-from json.decoder import JSONDecodeError
 from satsearch import Search
-from datetime import datetime, time, timedelta
-from json import load, loads, JSONDecodeError
+from datetime import datetime, timedelta
+from json import load, JSONDecodeError
 from pyproj import Transformer
 import requests
 import rasterio
@@ -13,14 +12,36 @@ from tempfile import NamedTemporaryFile
 import matplotlib.pyplot as plt
 from rasterio.coords import BoundingBox
 from rasterio.warp import calculate_default_transform, reproject, Resampling
+import click
 
 
 class NDVICalc():
 
     def __init__(self):
-        pass
+        '''
+        Class for NDVI calculation
 
-    def get_file_geometry(self, file_path:str):
+        Usage:
+            As package:
+
+                file_path = "/path/to/location.geojson"
+                calculator = NDVICalc()
+                calculator.calc_ndvi(file_path, full_statistics=True)
+
+                >> Average ndvi 0.763349073955204
+                >> Max ndvi 0.9454017424975799
+                >> Min ndvi -0.012085368989457444
+                >> Std ndvi 0.14438867079963805        
+
+            As CLI:
+
+
+        '''
+        self.SAT_API = 'https://earth-search.aws.element84.com/v0'
+
+        self.latest_data = None
+
+    def _get_file_geometry(self, file_path:str):
         ''' Parses geoJSON and returns the geometry
 
         Args:
@@ -31,7 +52,7 @@ class NDVICalc():
         '''
 
         # check if url or path is given
-        if "http" or "https" in file_path:
+        if "http" in file_path or "https" in file_path:
             resp = requests.get(file_path)
             if resp.status_code == 200:
                 file_content = resp.json()
@@ -53,7 +74,7 @@ class NDVICalc():
             print("Provided json file is not valid.")
             return None
     
-    def get_ndvi(self, nir, red):
+    def _get_ndvi(self, nir, red):
         '''
         Calculates NDVI for given nir and red bands
         
@@ -63,6 +84,8 @@ class NDVICalc():
         
         Returns:
             ndvi: float or np.array, normalized difference vegetation index
+
+        NDVI is defined as (nir-red)/(nir+red)
         '''
         nir = nir.astype(float)
         red = red.astype(float)
@@ -78,9 +101,9 @@ class NDVICalc():
                 tupel: (str, str) with urls of latest cog's
         '''
         
-        # search last 30 days
+        # search last 90 days
         current_date = datetime.now()
-        date_30_days_ago = current_date - timedelta(days=30)
+        date_30_days_ago = current_date - timedelta(days=90)
         current_date = current_date.strftime("%Y-%m-%d")
         date_30_days_ago = date_30_days_ago.strftime("%Y-%m-%d")
 
@@ -91,7 +114,7 @@ class NDVICalc():
                     }
                 }
         search = Search(
-            url='https://earth-search.aws.element84.com/v0',
+            url=self.SAT_API,
             intersects=geometry,
             datetime=date_30_days_ago + "/" + current_date,
             collections=['sentinel-s2-l2a-cogs'],
@@ -99,31 +122,34 @@ class NDVICalc():
             )        
         # grep latest red && nir
         items = search.items()
+        self.latest_data = items.dates()[-1]
+        print("Latest data found that intersects geometry:", self.latest_data)
+
         red = items[0].asset('red')["href"]
         nir = items[0].asset('nir')["href"]
 
         return {"red":red, "nir":nir}
 
 
-    def calc_ndvi_for_given_geometry(
+    def calc_ndvi(
         self, 
         file_path:str, 
-        full:bool=False,
+        full_statistics:bool=False,
         show_plot:bool=False, 
         save_plot:str=None, 
         ):
         '''
-        Calculates NDVI for given location
+        Calculates NDVI for given locconda install -c anaconda click
 
         Args:
             file_path:str, path or URL to geoJSON encoded location
 
         Optional:
-            full: bool, returns full statistics (max=maximum, min=minimum, std=standard deviation)
+            full_statistics: bool, returns full statistics (max=maximum, min=minimum, std=standard deviation)
             show_plot: bool, if True, a matplotlib plot is rendered
         '''
 
-        geometry = self.get_file_geometry(file_path)
+        geometry = self._get_file_geometry(file_path)
         bbox = bounds(geometry)
         latest_data = self.get_latest_sentinel_files(geometry)
         ndvi_data = {}
@@ -133,12 +159,17 @@ class NDVICalc():
                 coord_transformer = Transformer.from_crs("epsg:4326", url_fp.crs) 
 
                 # calculate pixels to be streamed in cog 
-
                 upper_left_coord = coord_transformer.transform(bbox[3], bbox[0])
                 lower_right_coord = coord_transformer.transform(bbox[1], bbox[2])            
                 upper_left_pixel = url_fp.index(upper_left_coord[0], upper_left_coord[1])
                 lower_right_pixel = url_fp.index(lower_right_coord[0], lower_right_coord[1])
                 
+                for pixel in upper_left_pixel + lower_right_pixel:
+                    if pixel < 0:
+                        print("Provided geometry extends available datafile.")
+                        print("Provide a smaller area of interest to get a result.")
+                        exit()
+
                 window = rasterio.windows.Window.from_slices(
                     (
                     upper_left_pixel[0], 
@@ -158,18 +189,16 @@ class NDVICalc():
                     10, 
                     10
                     )
-
                 dtype = subset.dtype            
                 dst_crs = 'EPSG:4326'
-
+                
                 transform, width, height = calculate_default_transform(
-                            url_fp.crs, 
-                            dst_crs, 
-                            subset.shape[1], 
-                            subset.shape[0], 
-                            *BoundingBox(upper_left_coord[0],upper_left_coord[1], lower_right_coord[0], lower_right_coord[1])
-                            )
-
+                    url_fp.crs, 
+                    dst_crs, 
+                    subset.shape[1], 
+                    subset.shape[0], 
+                    *BoundingBox(upper_left_coord[0],upper_left_coord[1], lower_right_coord[0], lower_right_coord[1])
+                    )
                 kwargs = url_fp.meta.copy()
                 kwargs.update({
                     'crs': dst_crs,
@@ -200,31 +229,40 @@ class NDVICalc():
                     with rasterio.open(tmp.name) as tmp:
                         out_img, _ = rasterio.mask.mask(tmp, [geometry], crop=True)                        
                         # mask all masked (e.g nodata) values
-                        ndvi_data[file_url] = out_img[0]
+                        ndvi_data[file_url] = ma.masked_invalid(out_img[0])
 
         # calculate ndvi & statistics
-        ndvi = self.get_ndvi(ndvi_data["nir"], ndvi_data["red"])
-        ndvi_masked = ma.masked_invalid(ndvi)
-        ndvi_avg = ndvi_masked.mean()
-        ndvi_max = ndvi_masked.max()
-        ndvi_min = ndvi_masked.min()
-        ndvi_std = ndvi_masked.std()
+        ndvi = self._get_ndvi(ndvi_data["nir"], ndvi_data["red"])
+        ndvi_avg = ndvi.mean()
+        ndvi_max = ndvi.max()
+        ndvi_min = ndvi.min()
+        ndvi_std = ndvi.std()
 
-        print("Average ndvi", ndvi_avg)
+        print(f"{self.latest_data} Average ndvi", ndvi_avg)
 
-        if full:
-            print("Max ndvi", ndvi_max)
-            print("Min ndvi", ndvi_min)
-            print("Std ndvi", ndvi_std)
+        if full_statistics:
+            print(f"{self.latest_data} Max ndvi", ndvi_max)
+            print(f"{self.latest_data} Min ndvi", ndvi_min)
+            print(f"{self.latest_data} Std ndvi", ndvi_std)
         if show_plot:
             plt.imshow(ndvi, cmap="seismic")
-            plt.title("NDVI")
+            plt.title(f"NDVI at {self.latest_data}")
             plt.colorbar()
             plt.show()
+       
 
-
+@click.command()
+@click.option('--path', help="Path or url to geoJSON file with geometry", required=True)
+@click.option('--full', is_flag=True, help="Print full statistics (max, min, std)")
+@click.option('--plot', is_flag=True, help='Render plot of NDVI at given geometry')
+def cli(path, full, plot):
+    calc = NDVICalc()
+    calc.calc_ndvi(file_path=path, full_statistics=full, show_plot=plot)
     
 if __name__ == "__main__":
-    ndvi_calc = NDVICalc()
-    ndvi_calc.calc_ndvi_for_given_geometry("https://gist.githubusercontent.com/rodrigoalmeida94/369280ddccf97763da54371199a9acea/raw/d18cd1e266023d08464e13bf0e239ee29175e592/doberitzer_heide.geojson",
-    save_plot="/home/neo/test.tiff")
+    cli()
+
+
+
+    calc = NDVICalc()
+    calc.cli()
