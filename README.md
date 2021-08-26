@@ -1,7 +1,7 @@
 # NDVI Calc Challenge
 
 This programm allows receiving the latest available NDVI scores
-from Sentinel-7 when passing a valid geoJSON path or URL.
+from Sentinel-2 when passing a valid geoJSON path or URL.
 
 ```bash
 $ ndvicalc --example

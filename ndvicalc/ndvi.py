@@ -275,7 +275,7 @@ class NDVICalc():
 @click.option('--plot', is_flag=True, help='Render plot of NDVI at given geometry')
 def cli(example, file, full, plot):
     '''
-    Calculate the NDVI from geoJSON files from path or URL
+    Calculate the NDVI from geoJSON files from path or URL by using open Sentinel-2 data
     '''
     calc = NDVICalc()
     if example:
