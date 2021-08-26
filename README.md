@@ -3,11 +3,6 @@
 This programm allows receiving the latest available NDVI scores
 from Sentinel-7 when passing a valid geoJSON path or URL.
 
-## Usage:
-Run script and specify a local path or url.
-
-`$ ndvicalc --file path/to/file [optional arguments]`
-
 ```bash
 $ ndvicalc --example
 
@@ -15,6 +10,11 @@ Using example doberitzer_heide.geojson
 Latest data found that intersects geometry: 2021-08-14
 2021-08-14 Average ndvi 0.763349073955204
 ```
+
+## Usage:
+Run script and specify a local path or url.
+
+`$ ndvicalc --file path/to/file [optional arguments]`
 
 You can also use the following optional arguments:
 arg | action
@@ -26,7 +26,7 @@ arg | action
 ## Installation:
 ```bash
 $ git clone https://github.com/marvingabler/ndvi_cli
-$ cd ndvi_cli
+$ cd ndvicalc
 $ pip install --editable .
 ```
 
