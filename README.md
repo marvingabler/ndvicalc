@@ -6,11 +6,12 @@ from Sentinel-7 when passing a valid geoJSON path or URL.
 ## Usage:
 Run script and specify a local path or url.
 
-`python ndvi.py --file path/to/file [optional arguments]`
+`$ ndvicalc --file path/to/file [optional arguments]`
 
 ```bash
-$ python ndvi.py --file "../example/doberitzer_heide.geojson"
+$ ndvicalc --example
 
+Using example doberitzer_heide.geojson
 Latest data found that intersects geometry: 2021-08-14
 2021-08-14 Average ndvi 0.763349073955204
 ```
@@ -23,5 +24,8 @@ arg | action
 `--example`| Run Doberitzer Heide example
 
 ## Installation:
-
-` pip install . `
+```bash
+$ git clone https://github.com/marvingabler/ndvi_cli
+$ cd ndvi_cli
+$ pip install --editable .
+```
