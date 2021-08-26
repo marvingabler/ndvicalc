@@ -23,6 +23,14 @@ arg | action
 `--full` | Full statistics (max, min, std) 
 `--plot` | Render a plot of the given geometry ([example](example/plot.png))
 
+## Statistical measures
+type | description
+----|-----
+avg | Average: Provides information about the average NDVI of the area of interest.
+max | Maximum: Provides information about the maximum found NDVI value. Gives information if vegetation is present in area of interest.
+min | Minimum: Provides information about the minimum found NDVI value. Gives information if low reflecting elemets like raw soil or water bodies are present in area of interest.
+std | Standard deviation: Provides information about the homogenity of the area of interest.
+
 ## Installation:
 ```bash
 $ git clone https://github.com/marvingabler/ndvi_cli
