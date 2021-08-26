@@ -21,7 +21,7 @@ arg | action
 ----|-----
 `--example`| Run Doberitzer Heide example
 `--full` | Full statistics (max, min, std) 
-`--plot` | Render a plot of the given geometry ![plot](example/plot.png)
+`--plot` | Render a plot of the given geometry ([example](example/plot.png))
 
 ## Installation:
 ```bash
