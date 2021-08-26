@@ -33,7 +33,7 @@ std | Standard deviation: Provides information about the homogenity of the area 
 
 ## Installation:
 ```bash
-$ git clone https://github.com/marvingabler/ndvi_cli
+$ git clone https://github.com/marvingabler/ndvicalc
 $ cd ndvicalc
 $ pip install --editable .
 ```
