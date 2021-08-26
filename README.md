@@ -1,4 +1,4 @@
-# NDVI Cli Challenge
+# NDVI Calc Challenge
 
 This programm allows receiving the latest available NDVI scores
 from Sentinel-7 when passing a valid geoJSON path or URL.
@@ -19,9 +19,9 @@ Latest data found that intersects geometry: 2021-08-14
 You can also use the following optional arguments:
 arg | action
 ----|-----
-`--full` | Full statistics (max, min, std) 
-`--plot` | Render a plot of the given geometry
 `--example`| Run Doberitzer Heide example
+`--full` | Full statistics (max, min, std) 
+`--plot` | Render a plot of the given geometry ![plot](example/plot.png)
 
 ## Installation:
 ```bash

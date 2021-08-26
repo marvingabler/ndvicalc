@@ -280,7 +280,7 @@ def cli(example, file, full, plot):
     calc = NDVICalc()
     if example:
         print("Using example doberitzer_heide.geojson")
-        file = "../example/doberitzer_heide.geojson"
+        file = "./example/doberitzer_heide.geojson"
     if not file:
         print("A path or url is required. Type 'ndvicalc --help' for help.")
     else:

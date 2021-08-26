@@ -15,8 +15,7 @@ setup(
         'numpy',
         'pyproj',
         'sat-search',
-        'requests',
-        'geojson'
+        'requests'
     ],
     entry_points={
         'console_scripts': [
