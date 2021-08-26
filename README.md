@@ -29,3 +29,9 @@ $ git clone https://github.com/marvingabler/ndvi_cli
 $ cd ndvi_cli
 $ pip install --editable .
 ```
+
+### Testing
+Install the package first, then:
+```
+$ python setup.py test
+```
